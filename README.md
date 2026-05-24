@@ -82,4 +82,4 @@ Progress is tracked live in the top bar. The final results screen shows correct,
 
 ---
 
-*Part of the Kana Learning Suite · see also `02_kana_flashcards.html` and `03_words_reading_test.html`*
+*Part of the Kana Learning Suite · see also `kana flash repository` and `word reader repository`*
