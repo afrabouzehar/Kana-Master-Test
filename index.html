@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big Kana Test</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #e8c84a;
+    --accent2: #e85a4a;
+    --accent3: #4ae8c8;
+    --text: #f0f0f5;
+    --text-muted: #7a7a8a;
+    --correct: #4ae88a;
+    --wrong: #e84a4a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+  }
+  /* Animated grid bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,200,74,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,200,74,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 48px 40px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: -1px;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .japanese-deco {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 48px;
+    color: var(--border);
+    letter-spacing: 8px;
+    user-select: none;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    position: relative; z-index: 1;
+    background: var(--surface2);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .progress-bar-outer {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+  .progress-text { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+  .score-badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 14px;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  /* ── SECTION TABS ── */
+  .section-nav {
+    position: relative; z-index: 1;
+    padding: 20px 40px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-tab {
+    padding: 8px 18px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .section-tab.active, .section-tab:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,200,74,0.07);
+  }
+  .section-tab.done { border-color: var(--correct); color: var(--correct); }
+
+  /* ── MAIN ── */
+  main {
+    position: relative; z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: var(--text);
+  }
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 3px 10px;
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+  }
+
+  /* ── QUESTION CARD ── */
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 20px;
+    transition: border-color .3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .q-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .q-card.answered::before { opacity: 1; }
+  .q-card.correct { border-color: var(--correct); }
+  .q-card.wrong { border-color: var(--wrong); }
+
+  .q-number {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .q-char {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(48px, 8vw, 80px);
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 20px;
+    display: block;
+  }
+  .q-prompt {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+
+  /* Multiple choice */
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .choice-btn {
+    padding: 14px 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all .15s;
+    text-align: left;
+  }
+  .choice-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(232,200,74,0.08);
+    color: var(--accent);
+  }
+  .choice-btn.correct-ans { border-color: var(--correct); background: rgba(74,232,138,0.12); color: var(--correct); }
+  .choice-btn.wrong-ans   { border-color: var(--wrong);   background: rgba(232,74,74,0.12);  color: var(--wrong); }
+  .choice-btn:disabled { cursor: default; }
+
+  /* Text input */
+  .text-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .kana-input {
+    flex: 1;
+    padding: 14px 18px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .kana-input:focus { border-color: var(--accent); }
+  .kana-input.correct { border-color: var(--correct); }
+  .kana-input.wrong   { border-color: var(--wrong); }
+  .submit-btn {
+    padding: 14px 22px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: opacity .2s;
+  }
+  .submit-btn:hover { opacity: .85; }
+  .submit-btn:disabled { opacity: .4; cursor: default; }
+
+  /* Kana-to-romaji matching */
+  .match-section { display: flex; gap: 24px; flex-wrap: wrap; }
+  .match-col { flex: 1; min-width: 140px; }
+  .match-col h4 { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+  .match-item {
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 22px;
+    cursor: pointer;
+    transition: all .15s;
+    position: relative;
+  }
+  .match-item.romaji { font-family: 'DM Mono', monospace; font-size: 15px; }
+  .match-item:hover:not(.matched):not(:disabled) { border-color: var(--accent); }
+  .match-item.selected { border-color: var(--accent); background: rgba(232,200,74,0.1); }
+  .match-item.matched-correct { border-color: var(--correct); background: rgba(74,232,138,0.1); color: var(--correct); cursor: default; }
+  .match-item.matched-wrong { border-color: var(--wrong); background: rgba(232,74,74,0.1); color: var(--wrong); }
+
+  .feedback {
+    margin-top: 12px;
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: rgba(74,232,138,0.1); color: var(--correct); border: 1px solid rgba(74,232,138,0.3); }
+  .feedback.wrong   { background: rgba(232,74,74,0.1);   color: var(--wrong);   border: 1px solid rgba(232,74,74,0.3); }
+
+  /* ── RESULTS ── */
+  #results-screen {
+    display: none;
+    text-align: center;
+    padding: 60px 24px;
+  }
+  #results-screen.show { display: block; }
+  .result-big {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(64px, 12vw, 120px);
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .result-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+  .result-breakdown {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .result-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 32px;
+    min-width: 140px;
+  }
+  .result-box-num { font-family: 'Playfair Display', serif; font-size: 40px; color: var(--text); }
+  .result-box-label { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+  .restart-btn {
+    padding: 16px 40px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: transform .15s;
+  }
+  .restart-btn:hover { transform: translateY(-2px); }
+
+  /* Navigation */
+  .nav-btns {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 32px;
+  }
+  .nav-btn {
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .nav-btn.primary { background: var(--accent); color: var(--bg); border: none; }
+  .nav-btn.secondary { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .nav-btn:hover { opacity: .85; }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 600px) {
+    header, .progress-wrap, .section-nav { padding-left: 20px; padding-right: 20px; }
+    .choices { grid-template-columns: 1fr; }
+    .match-section { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-title">Kana Master Test</div>
+    <div class="header-sub">Hiragana &amp; Katakana · Complete Examination</div>
+  </div>
+  <div class="japanese-deco">あアいイ</div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-bar-outer">
+    <div class="progress-bar-inner" id="progressBar"></div>
+  </div>
+  <div class="progress-text" id="progressText">0 / 0</div>
+  <div class="score-badge" id="scoreBadge">Score: 0</div>
+</div>
+
+<div class="section-nav" id="sectionNav">
+  <button class="section-tab active" data-section="0">I · Hiragana MC</button>
+  <button class="section-tab" data-section="1">II · Katakana MC</button>
+  <button class="section-tab" data-section="2">III · Type It</button>
+  <button class="section-tab" data-section="3">IV · Identify</button>
+  <button class="section-tab" data-section="4">V · Mixed</button>
+</div>
+
+<main id="mainContent">
+  <div id="quiz-screen">
+    <div class="section-header">
+      <div class="section-title" id="sectionTitle">Section I</div>
+      <div class="section-label" id="sectionLabel">HIRAGANA</div>
+    </div>
+    <div id="questionsContainer"></div>
+    <div class="nav-btns">
+      <button class="nav-btn secondary" id="btnPrev" onclick="prevSection()">← Prev</button>
+      <button class="nav-btn primary" id="btnNext" onclick="nextSection()">Next →</button>
+    </div>
+  </div>
+  <div id="results-screen">
+    <div class="result-big" id="resultPct">—</div>
+    <div class="result-sub">Final Score</div>
+    <div class="result-breakdown" id="resultBreakdown"></div>
+    <button class="restart-btn" onclick="restart()">↺ Restart Test</button>
+  </div>
+</main>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const hiragana = [
+  {char:'あ',rom:'a'},{char:'い',rom:'i'},{char:'う',rom:'u'},{char:'え',rom:'e'},{char:'お',rom:'o'},
+  {char:'か',rom:'ka'},{char:'き',rom:'ki'},{char:'く',rom:'ku'},{char:'け',rom:'ke'},{char:'こ',rom:'ko'},
+  {char:'さ',rom:'sa'},{char:'し',rom:'shi'},{char:'す',rom:'su'},{char:'せ',rom:'se'},{char:'そ',rom:'so'},
+  {char:'た',rom:'ta'},{char:'ち',rom:'chi'},{char:'つ',rom:'tsu'},{char:'て',rom:'te'},{char:'と',rom:'to'},
+  {char:'な',rom:'na'},{char:'に',rom:'ni'},{char:'ぬ',rom:'nu'},{char:'ね',rom:'ne'},{char:'の',rom:'no'},
+  {char:'は',rom:'ha'},{char:'ひ',rom:'hi'},{char:'ふ',rom:'fu'},{char:'へ',rom:'he'},{char:'ほ',rom:'ho'},
+  {char:'ま',rom:'ma'},{char:'み',rom:'mi'},{char:'む',rom:'mu'},{char:'め',rom:'me'},{char:'も',rom:'mo'},
+  {char:'や',rom:'ya'},{char:'ゆ',rom:'yu'},{char:'よ',rom:'yo'},
+  {char:'ら',rom:'ra'},{char:'り',rom:'ri'},{char:'る',rom:'ru'},{char:'れ',rom:'re'},{char:'ろ',rom:'ro'},
+  {char:'わ',rom:'wa'},{char:'を',rom:'wo'},{char:'ん',rom:'n'},
+  {char:'が',rom:'ga'},{char:'ぎ',rom:'gi'},{char:'ぐ',rom:'gu'},{char:'げ',rom:'ge'},{char:'ご',rom:'go'},
+  {char:'ざ',rom:'za'},{char:'じ',rom:'ji'},{char:'ず',rom:'zu'},{char:'ぜ',rom:'ze'},{char:'ぞ',rom:'zo'},
+];
+const katakana = [
+  {char:'ア',rom:'a'},{char:'イ',rom:'i'},{char:'ウ',rom:'u'},{char:'エ',rom:'e'},{char:'オ',rom:'o'},
+  {char:'カ',rom:'ka'},{char:'キ',rom:'ki'},{char:'ク',rom:'ku'},{char:'ケ',rom:'ke'},{char:'コ',rom:'ko'},
+  {char:'サ',rom:'sa'},{char:'シ',rom:'shi'},{char:'ス',rom:'su'},{char:'セ',rom:'se'},{char:'ソ',rom:'so'},
+  {char:'タ',rom:'ta'},{char:'チ',rom:'chi'},{char:'ツ',rom:'tsu'},{char:'テ',rom:'te'},{char:'ト',rom:'to'},
+  {char:'ナ',rom:'na'},{char:'ニ',rom:'ni'},{char:'ヌ',rom:'nu'},{char:'ネ',rom:'ne'},{char:'ノ',rom:'no'},
+  {char:'ハ',rom:'ha'},{char:'ヒ',rom:'hi'},{char:'フ',rom:'fu'},{char:'ヘ',rom:'he'},{char:'ホ',rom:'ho'},
+  {char:'マ',rom:'ma'},{char:'ミ',rom:'mi'},{char:'ム',rom:'mu'},{char:'メ',rom:'me'},{char:'モ',rom:'mo'},
+  {char:'ヤ',rom:'ya'},{char:'ユ',rom:'yu'},{char:'ヨ',rom:'yo'},
+  {char:'ラ',rom:'ra'},{char:'リ',rom:'ri'},{char:'ル',rom:'ru'},{char:'レ',rom:'re'},{char:'ロ',rom:'ro'},
+  {char:'ワ',rom:'wa'},{char:'ヲ',rom:'wo'},{char:'ン',rom:'n'},
+  {char:'ガ',rom:'ga'},{char:'ギ',rom:'gi'},{char:'グ',rom:'gu'},{char:'ゲ',rom:'ge'},{char:'ゴ',rom:'go'},
+  {char:'ザ',rom:'za'},{char:'ジ',rom:'ji'},{char:'ズ',rom:'zu'},{char:'ゼ',rom:'ze'},{char:'ゾ',rom:'zo'},
+];
+
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+function pick(arr,n){ return shuffle(arr).slice(0,n); }
+function distractors(correct, pool, n=3){
+  const wrong = pool.filter(x=>x.rom!==correct.rom);
+  return shuffle([correct, ...pick(wrong,n)]);
+}
+
+// ── SECTIONS ──────────────────────────────────────────────────────────────────
+let sections, currentSection, totalQ, answeredQ, score;
+
+function buildSections(){
+  sections = [
+    {
+      title:'Section I',label:'HIRAGANA · Multiple Choice',
+      type:'mc', data: pick(hiragana,20)
+    },
+    {
+      title:'Section II',label:'KATAKANA · Multiple Choice',
+      type:'mc', data: pick(katakana,20)
+    },
+    {
+      title:'Section III',label:'TYPE THE ROMAJI',
+      type:'type', data: pick([...hiragana,...katakana],25)
+    },
+    {
+      title:'Section IV',label:'IDENTIFY THE SCRIPT',
+      type:'identify', data: pick([...hiragana,...katakana],20)
+    },
+    {
+      title:'Section V',label:'MIXED CHALLENGE',
+      type:'mc', data: pick([...hiragana,...katakana],20)
+    },
+  ];
+  totalQ = sections.reduce((s,sec)=>s+sec.data.length,0);
+  answeredQ = 0;
+  score = 0;
+}
+
+function init(){
+  buildSections();
+  currentSection = 0;
+  renderSection(0);
+  updateProgress();
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────────
+function renderSection(idx){
+  const sec = sections[idx];
+  document.getElementById('sectionTitle').textContent = sec.title;
+  document.getElementById('sectionLabel').textContent = sec.label;
+  document.querySelectorAll('.section-tab').forEach((t,i)=>{
+    t.classList.toggle('active', i===idx);
+  });
+  document.getElementById('btnPrev').classList.toggle('hidden', idx===0);
+  document.getElementById('btnNext').textContent = idx===sections.length-1 ? 'Finish →' : 'Next →';
+
+  const container = document.getElementById('questionsContainer');
+  container.innerHTML = '';
+
+  if(sec.type==='mc'){
+    sec.data.forEach((item,i)=>{
+      const opts = distractors(item, [...hiragana,...katakana]);
+      const card = buildMCCard(item,opts,i,sec);
+      container.appendChild(card);
+    });
+  } else if(sec.type==='type'){
+    sec.data.forEach((item,i)=>{
+      container.appendChild(buildTypeCard(item,i,sec));
+    });
+  } else if(sec.type==='identify'){
+    sec.data.forEach((item,i)=>{
+      container.appendChild(buildIdentifyCard(item,i,sec));
+    });
+  }
+}
+
+function buildMCCard(item,opts,i,sec){
+  const card = document.createElement('div');
+  card.className='q-card';
+  card.dataset.answered='0';
+  card.innerHTML=`
+    <div class="q-number">Q${i+1} of ${sec.data.length}</div>
+    <span class="q-char">${item.char}</span>
+    <div class="q-prompt">What is the romaji for this character?</div>
+    <div class="choices" id="choices-${sec.title}-${i}"></div>
+    <div class="feedback" id="fb-${sec.title}-${i}"></div>
+  `;
+  const choicesDiv = card.querySelector('.choices');
+  opts.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className='choice-btn';
+    btn.textContent=opt.rom;
+    btn.onclick=()=>checkMC(btn,opt,item,card,sec.title,i);
+    choicesDiv.appendChild(btn);
+  });
+  return card;
+}
+
+function checkMC(btn,opt,item,card,secTitle,i){
+  if(card.dataset.answered==='1') return;
+  card.dataset.answered='1';
+  card.querySelectorAll('.choice-btn').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===item.rom) b.classList.add('correct-ans');
+  });
+  const fb = document.getElementById(`fb-${secTitle}-${i}`);
+  if(opt.rom===item.rom){
+    btn.classList.add('correct-ans');
+    card.classList.add('correct');
+    fb.textContent=`✓ Correct! ${item.char} = ${item.rom}`;
+    fb.className='feedback show correct';
+    score++; answeredQ++;
+  } else {
+    btn.classList.add('wrong-ans');
+    card.classList.add('wrong');
+    fb.textContent=`✗ Wrong. ${item.char} = ${item.rom}`;
+    fb.className='feedback show wrong';
+    answeredQ++;
+  }
+  updateProgress();
+}
+
+function buildTypeCard(item,i,sec){
+  const card=document.createElement('div');
+  card.className='q-card';
+  card.dataset.answered='0';
+  const hint = item.char.charCodeAt(0)>=0x30A0 ? 'Katakana' : 'Hiragana';
+  card.innerHTML=`
+    <div class="q-number">Q${i+1} of ${sec.data.length} · ${hint}</div>
+    <span class="q-char">${item.char}</span>
+    <div class="q-prompt">Type the romaji reading:</div>
+    <div class="text-input-row">
+      <input class="kana-input" id="ti-${i}" placeholder="e.g. ka" autocomplete="off" />
+      <button class="submit-btn" id="tsb-${i}" onclick="checkType(${i},'${item.rom}','${item.char}')">Submit</button>
+    </div>
+    <div class="feedback" id="tfb-${i}"></div>
+  `;
+  const inp = card.querySelector(`#ti-${i}`);
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById(`tsb-${i}`).click(); });
+  return card;
+}
+
+function checkType(i,correct,char){
+  const inp=document.getElementById(`ti-${i}`);
+  const btn=document.getElementById(`tsb-${i}`);
+  const fb=document.getElementById(`tfb-${i}`);
+  const val=inp.value.trim().toLowerCase();
+  if(!val) return;
+  inp.disabled=true; btn.disabled=true;
+  // accept alt spellings
+  const alts={'shi':['si'],'chi':['ti'],'tsu':['tu'],'fu':['hu'],'ji':['zi'],'n':['nn','m']};
+  const accepted=[correct,...(alts[correct]||[])];
+  if(accepted.includes(val)){
+    inp.classList.add('correct');
+    fb.textContent=`✓ Correct! ${char} = ${correct}`;
+    fb.className='feedback show correct';
+    score++; answeredQ++;
+  } else {
+    inp.classList.add('wrong');
+    fb.textContent=`✗ Incorrect. ${char} = ${correct}`;
+    fb.className='feedback show wrong';
+    answeredQ++;
+  }
+  updateProgress();
+}
+
+function buildIdentifyCard(item,i,sec){
+  const card=document.createElement('div');
+  card.className='q-card';
+  card.dataset.answered='0';
+  const correct=item.char.charCodeAt(0)>=0x30A0?'Katakana':'Hiragana';
+  card.innerHTML=`
+    <div class="q-number">Q${i+1} of ${sec.data.length}</div>
+    <span class="q-char">${item.char}</span>
+    <div class="q-prompt">Is this Hiragana or Katakana?</div>
+    <div class="choices">
+      <button class="choice-btn" onclick="checkIdentify(this,'Hiragana','${correct}',arguments[0].target.closest('.q-card'),${i})">Hiragana</button>
+      <button class="choice-btn" onclick="checkIdentify(this,'Katakana','${correct}',arguments[0].target.closest('.q-card'),${i})">Katakana</button>
+    </div>
+    <div class="feedback" id="idfb-${i}"></div>
+  `;
+  return card;
+}
+
+function checkIdentify(btn,chosen,correct,card,i){
+  if(card.dataset.answered==='1') return;
+  card.dataset.answered='1';
+  card.querySelectorAll('.choice-btn').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===correct) b.classList.add('correct-ans');
+  });
+  const fb=document.getElementById(`idfb-${i}`);
+  if(chosen===correct){
+    btn.classList.add('correct-ans');
+    card.classList.add('correct');
+    fb.textContent=`✓ Correct! That is ${correct}`;
+    fb.className='feedback show correct';
+    score++; answeredQ++;
+  } else {
+    btn.classList.add('wrong-ans');
+    card.classList.add('wrong');
+    fb.textContent=`✗ Wrong. That is ${correct}`;
+    fb.className='feedback show wrong';
+    answeredQ++;
+  }
+  updateProgress();
+}
+
+// ── PROGRESS ──────────────────────────────────────────────────────────────────
+function updateProgress(){
+  const pct=totalQ>0?Math.round(answeredQ/totalQ*100):0;
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('progressText').textContent=`${answeredQ} / ${totalQ}`;
+  document.getElementById('scoreBadge').textContent=`Score: ${score}`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function nextSection(){
+  if(currentSection===sections.length-1){ showResults(); return; }
+  currentSection++;
+  renderSection(currentSection);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function prevSection(){
+  if(currentSection===0) return;
+  currentSection--;
+  renderSection(currentSection);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.querySelectorAll('.section-tab').forEach((tab,i)=>{
+  tab.addEventListener('click',()=>{ currentSection=i; renderSection(i); window.scrollTo({top:0,behavior:'smooth'}); });
+});
+
+// ── RESULTS ───────────────────────────────────────────────────────────────────
+function showResults(){
+  document.getElementById('quiz-screen').classList.add('hidden');
+  const rs=document.getElementById('results-screen');
+  rs.classList.add('show');
+  const pct=Math.round(score/totalQ*100);
+  document.getElementById('resultPct').textContent=pct+'%';
+  const grades=[
+    {min:90,text:'優 · Excellent'},{min:75,text:'良 · Good'},{min:60,text:'可 · Passing'},{min:0,text:'もう一度 · Try Again'}
+  ];
+  const grade=grades.find(g=>pct>=g.min);
+  document.getElementById('resultBreakdown').innerHTML=`
+    <div class="result-box"><div class="result-box-num">${score}</div><div class="result-box-label">Correct</div></div>
+    <div class="result-box"><div class="result-box-num">${totalQ-score}</div><div class="result-box-label">Wrong</div></div>
+    <div class="result-box"><div class="result-box-num">${totalQ}</div><div class="result-box-label">Total</div></div>
+    <div class="result-box"><div class="result-box-num" style="font-size:22px;color:var(--accent)">${grade.text}</div><div class="result-box-label">Grade</div></div>
+  `;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function restart(){
+  document.getElementById('results-screen').classList.remove('show');
+  document.getElementById('quiz-screen').classList.remove('hidden');
+  init();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
