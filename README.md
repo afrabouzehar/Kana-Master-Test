@@ -1,5 +1,5 @@
 # 🏯 Kana Master Test
-### `01_big_kana_test.html`
+### `index.html`
 
 A comprehensive, single-file hiragana & katakana examination covering the full kana syllabary across five scored sections.
 
@@ -21,7 +21,7 @@ A comprehensive, single-file hiragana & katakana examination covering the full k
 
 ## How to Use
 
-1. Open `01_big_kana_test.html` in any modern browser — no internet required after load.
+1. Open `index.html` in any modern browser — no internet required after load.
 2. Use the **section tabs** at the top to jump between sections freely.
 3. Answer every question in a section, then click **Next →** to proceed.
 4. After Section V, click **Finish →** to see your results.
